@@ -1,11 +1,31 @@
 # Extend Microsoft 365 Copilot in Copilot Studio
 
-[Exercise 1: Create a declarative agent](https://microsoftlearning.github.io/MS-4022-Extend-Microsoft-365-Copilot-in-Copilot-Studio/Instructions/Labs/01-Build-your-first-declarative-agent/01-create-declarative-agent.html)
+Companion Material for Class Delivery by [Alexander Kastil](https://www.linkedin.com/in/alexander-kastil-3bb26511a/) containing:
 
-[Exercise 2: Add custom knowledge](https://microsoftlearning.github.io/MS-4022-Extend-Microsoft-365-Copilot-in-Copilot-Studio/Instructions/Labs/01-Build-your-first-declarative-agent/02-add-custom-knowledge.html)
+- [Instructor Demos](./demos)
 
-[Exercise 3: Add starter prompts](https://microsoftlearning.github.io/MS-4022-Extend-Microsoft-365-Copilot-in-Copilot-Studio/Instructions/Labs/01-Build-your-first-declarative-agent/03-add-starter-prompts.html)
+## Proposed Resources
 
-[Exercise - Create a prompt action](https://microsoftlearning.github.io/MS-4022-Extend-Microsoft-365-Copilot-in-Copilot-Studio/Instructions/Labs/02-Prompt-actions/01-create-prompt-action.html)
+- [Microsoft 365 Tenant](https://www.microsoft.com/en/microsoft-365/business/compare-all-microsoft-365-business-products?market=af)
 
-[Exercise - Create a connector action](https://microsoftlearning.github.io/MS-4022-Extend-Microsoft-365-Copilot-in-Copilot-Studio/Instructions/Labs/03-Connector-actions/01-create-connector-action.html)
+- [Copilot for Microsoft 365](https://adoption.microsoft.com/en-us/copilot/)
+
+- [Copilot Studio](https://copilotstudio.microsoft.com/)
+
+## Contributing
+
+Feel free to contribute. When contribute implement your changes / additions on a feature branch in your fork and issue a pull request after completion. An introduction video into forks and pull requests can be found [in this YouTube video](https://www.youtube.com/watch?v=nT8KGYVurIU)
+
+## License & Re-Use
+
+This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License
+
+Permission is hereby granted to to use, modify, and distribute the workshop materials provided under the following conditions:
+
+- Personal Use: Users may use the materials for personal learning and educational purposes.
+- Modification: Users may modify the materials to suit their needs.
+- Non-Commercial Use: Commercial use is strictly prohibited.
+- Attribution: Users must give appropriate credit to the author and include a link to the original materials.
+- Share-Alike: Any derivative works based on these materials must be shared under the same license terms.
+
+For commercial use please contact the author via [LinkedIn](https://www.linkedin.com/in/alexander-kastil-3bb26511a/) or [email](mailto:alexander.kastil@integrations.at)
