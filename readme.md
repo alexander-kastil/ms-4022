@@ -12,6 +12,10 @@ Companion Material for Class Delivery by [Alexander Kastil](https://www.linkedin
 
 - [Copilot Studio](https://copilotstudio.microsoft.com/)
 
+## Certification / Applied Skill
+
+[Microsoft Applied Skills: Create agents in Microsoft Copilot Studio](https://learn.microsoft.com/en-us/credentials/applied-skills/create-agents-in-microsoft-copilot-studio/)
+
 ## Contributing
 
 Feel free to contribute. When contribute implement your changes / additions on a feature branch in your fork and issue a pull request after completion. An introduction video into forks and pull requests can be found [in this YouTube video](https://www.youtube.com/watch?v=nT8KGYVurIU)
