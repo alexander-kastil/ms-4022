@@ -10,3 +10,5 @@ Lab 07: Complex scenarios - Multi-agent solutions (appears to be in development)
 ## Additional Labs
 
 [Create agents in Microsoft Copilot Studio](https://learn.microsoft.com/en-us/training/paths/create-extend-custom-copilots-microsoft-copilot-studio/)
+
+[Copilot Dev Camp - Maker Path](https://microsoft.github.io/copilot-camp/pages/make/)
