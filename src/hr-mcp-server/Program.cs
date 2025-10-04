@@ -1,19 +1,13 @@
-using ModelContextProtocol.Server;
-using System.ComponentModel;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using HRMCPServer;
+using HRMCPServer.Data;
 using HRMCPServer.Services;
+using Microsoft.EntityFrameworkCore;
+using ModelContextProtocol.Server;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure the HR MCP Server settings
-builder.Services.Configure<HRMCPServerConfiguration>(
-    builder.Configuration.GetSection(HRMCPServerConfiguration.SectionName));
-
-// Load candidates data and register as singleton
-var candidatesData = await LoadCandidatesAsync(builder.Configuration);
-builder.Services.AddSingleton(candidatesData);
+// Configure SQL Server-backed candidate database
+builder.Services.AddDbContext<CandidateDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("CandidateDatabase")));
 
 // Register the candidate service
 builder.Services.AddScoped<ICandidateService, CandidateService>();
@@ -22,8 +16,11 @@ builder.Services.AddScoped<ICandidateService, CandidateService>();
 builder.Services.AddMcpServer()
     .WithHttpTransport()
     .WithToolsFromAssembly();
-    
+
 var app = builder.Build();
+
+// Ensure database is created and seeded
+await CandidateDbInitializer.InitializeAsync(app.Services);
 
 // Configure the application to use the MCP server
 app.MapMcp();
@@ -31,46 +28,3 @@ app.MapMcp();
 // Run the application
 // This will start the MCP server and listen for incoming requests.
 app.Run();
-
-// Helper method to load candidates from JSON file
-static async Task<List<Candidate>> LoadCandidatesAsync(IConfiguration configuration)
-{
-    try
-    {
-        var hrConfig = configuration.GetSection(HRMCPServerConfiguration.SectionName).Get<HRMCPServerConfiguration>();
-        
-        if (hrConfig == null || string.IsNullOrEmpty(hrConfig.CandidatesPath))
-        {
-            Console.WriteLine("HR configuration or CandidatesPath not found. Using empty candidate list.");
-            return new List<Candidate>();
-        }
-
-        if (!File.Exists(hrConfig.CandidatesPath))
-        {
-            Console.WriteLine($"Candidates file not found at: {hrConfig.CandidatesPath}. Using empty candidate list.");
-            return new List<Candidate>();
-        }
-
-        var jsonContent = await File.ReadAllTextAsync(hrConfig.CandidatesPath);
-        var candidates = JsonSerializer.Deserialize<List<Candidate>>(jsonContent, GetJsonOptions());
-
-        Console.WriteLine($"Loaded {candidates?.Count ?? 0} candidates from file: {hrConfig.CandidatesPath}");
-        return candidates ?? new List<Candidate>();
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error loading candidates from file: {ex.Message}. Using empty candidate list.");
-        return new List<Candidate>();
-    }
-}
-
-// Helper method for JSON serialization options
-static JsonSerializerOptions GetJsonOptions()
-{
-    return new JsonSerializerOptions
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-        WriteIndented = true,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-    };
-}

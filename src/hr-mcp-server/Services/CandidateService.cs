@@ -1,5 +1,5 @@
-using System.Text.Json;
-using Microsoft.Extensions.Options;
+using HRMCPServer.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace HRMCPServer.Services;
 
@@ -8,111 +8,116 @@ namespace HRMCPServer.Services;
 /// </summary>
 public class CandidateService : ICandidateService
 {
-    private readonly List<Candidate> _candidates;
-    private readonly object _candidatesLock = new();
+    private readonly CandidateDbContext _dbContext;
     private readonly ILogger<CandidateService> _logger;
 
     public CandidateService(
-        List<Candidate> candidates,
+        CandidateDbContext dbContext,
         ILogger<CandidateService> logger)
     {
-        _candidates = candidates ?? throw new ArgumentNullException(nameof(candidates));
+        _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public Task<List<Candidate>> GetAllCandidatesAsync()
+    public async Task<List<Candidate>> GetAllCandidatesAsync()
     {
-        lock (_candidatesLock)
-        {
-            return Task.FromResult(new List<Candidate>(_candidates));
-        }
+        return await _dbContext.Candidates
+            .AsNoTracking()
+            .OrderBy(c => c.LastName)
+            .ThenBy(c => c.FirstName)
+            .ToListAsync();
     }
 
-    public Task<bool> AddCandidateAsync(Candidate candidate)
+    public async Task<bool> AddCandidateAsync(Candidate candidate)
     {
         if (candidate == null)
             throw new ArgumentNullException(nameof(candidate));
 
-        lock (_candidatesLock)
-        {
-            // Check if candidate with same email already exists
-            if (_candidates.Any(c => string.Equals(c.Email, candidate.Email, StringComparison.OrdinalIgnoreCase)))
-            {
-                return Task.FromResult(false);
-            }
+        var email = candidate.Email.Trim();
 
-            _candidates.Add(candidate);
-            _logger.LogInformation("Added new candidate: {FullName} ({Email})", candidate.FullName, candidate.Email);
-            return Task.FromResult(true);
+        if (await _dbContext.Candidates.AnyAsync(c => c.Email == email))
+        {
+            return false;
         }
+
+        candidate.Email = email;
+
+        await _dbContext.Candidates.AddAsync(candidate);
+        await _dbContext.SaveChangesAsync();
+
+        _logger.LogInformation("Added new candidate: {FullName} ({Email})", candidate.FullName, candidate.Email);
+        return true;
     }
 
-    public Task<bool> UpdateCandidateAsync(string email, Action<Candidate> updateAction)
+    public async Task<bool> UpdateCandidateAsync(string email, Action<Candidate> updateAction)
     {
         if (string.IsNullOrWhiteSpace(email))
             throw new ArgumentException("Email cannot be null or empty", nameof(email));
-        
+
         if (updateAction == null)
             throw new ArgumentNullException(nameof(updateAction));
 
-        lock (_candidatesLock)
+        var normalizedEmail = email.Trim();
+
+        var candidate = await _dbContext.Candidates
+            .FirstOrDefaultAsync(c => c.Email == normalizedEmail);
+
+        if (candidate == null)
         {
-            var candidate = _candidates.FirstOrDefault(c => 
-                string.Equals(c.Email, email, StringComparison.OrdinalIgnoreCase));
-
-            if (candidate == null)
-            {
-                return Task.FromResult(false);
-            }
-
-            updateAction(candidate);
-            _logger.LogInformation("Updated candidate with email: {Email}", email);
-            return Task.FromResult(true);
+            return false;
         }
+
+        updateAction(candidate);
+        await _dbContext.SaveChangesAsync();
+
+        _logger.LogInformation("Updated candidate with email: {Email}", normalizedEmail);
+        return true;
     }
 
-    public Task<bool> RemoveCandidateAsync(string email)
+    public async Task<bool> RemoveCandidateAsync(string email)
     {
         if (string.IsNullOrWhiteSpace(email))
             throw new ArgumentException("Email cannot be null or empty", nameof(email));
 
-        lock (_candidatesLock)
+        var normalizedEmail = email.Trim();
+
+        var candidate = await _dbContext.Candidates
+            .FirstOrDefaultAsync(c => c.Email == normalizedEmail);
+
+        if (candidate == null)
         {
-            var candidate = _candidates.FirstOrDefault(c => 
-                string.Equals(c.Email, email, StringComparison.OrdinalIgnoreCase));
-
-            if (candidate == null)
-            {
-                return Task.FromResult(false);
-            }
-
-            _candidates.Remove(candidate);
-            _logger.LogInformation("Removed candidate with email: {Email}", email);
-            return Task.FromResult(true);
+            return false;
         }
+
+        _dbContext.Candidates.Remove(candidate);
+        await _dbContext.SaveChangesAsync();
+
+        _logger.LogInformation("Removed candidate with email: {Email}", normalizedEmail);
+        return true;
     }
 
-    public Task<List<Candidate>> SearchCandidatesAsync(string searchTerm)
+    public async Task<List<Candidate>> SearchCandidatesAsync(string searchTerm)
     {
         if (string.IsNullOrWhiteSpace(searchTerm))
         {
-            return GetAllCandidatesAsync();
+            return await GetAllCandidatesAsync();
         }
 
         var searchTermLower = searchTerm.Trim().ToLowerInvariant();
 
-        lock (_candidatesLock)
-        {
-            var matchingCandidates = _candidates.Where(c =>
-                c.FirstName.ToLowerInvariant().Contains(searchTermLower) ||
-                c.LastName.ToLowerInvariant().Contains(searchTermLower) ||
-                c.Email.ToLowerInvariant().Contains(searchTermLower) ||
-                c.CurrentRole.ToLowerInvariant().Contains(searchTermLower) ||
-                c.Skills.Any(skill => skill.ToLowerInvariant().Contains(searchTermLower)) ||
-                c.SpokenLanguages.Any(lang => lang.ToLowerInvariant().Contains(searchTermLower))
-            ).ToList();
+        var candidates = await _dbContext.Candidates
+            .AsNoTracking()
+            .ToListAsync();
 
-            return Task.FromResult(matchingCandidates);
-        }
+        var matchingCandidates = candidates.Where(c =>
+            c.FirstName.ToLowerInvariant().Contains(searchTermLower) ||
+            c.LastName.ToLowerInvariant().Contains(searchTermLower) ||
+            c.Email.ToLowerInvariant().Contains(searchTermLower) ||
+            c.CurrentRole.ToLowerInvariant().Contains(searchTermLower) ||
+            c.Skills.Any(skill => skill.ToLowerInvariant().Contains(searchTermLower)) ||
+            c.SpokenLanguages.Any(lang => lang.ToLowerInvariant().Contains(searchTermLower))
+        ).ToList();
+
+        return matchingCandidates;
     }
 }
